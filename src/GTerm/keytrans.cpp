@@ -8,9 +8,9 @@ License: wxWindows License Version 3.1 (See the file license3.txt)
 
 */
 
+
 #include "gterm.hpp"
 #include <ctype.h>
-
 
 //
 //  Keycode translation tables
