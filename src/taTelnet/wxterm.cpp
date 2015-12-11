@@ -31,6 +31,7 @@ License: wxWindows License Version 3.1 (See the file license3.txt)
 #include <wx/utils.h>
 
 #include <ctype.h>
+#include <algorithm>
 
 #include "../GTerm/gterm.hpp"
 #include "wxterm.h"
@@ -373,7 +374,7 @@ wxTerm::wxTerm(wxWindow* parent, wxWindowID id,
                const wxPoint& pos,
                int width, int height,
                const wxString& name) :
-  wxWindow(parent, id, pos, wxSize(-1, -1), wxWANTS_CHARS, name),
+  wxScrolled<wxWindow>(parent, id, pos, wxSize(-1, -1), 0, name),
   GTerm(width, height)
 {
   int
@@ -412,6 +413,7 @@ wxTerm::wxTerm(wxWindow* parent, wxWindowID id,
   for(i = 0; i < 16; i++)
     m_pc_colorPens[i] = wxPen(m_pc_colors[i], 1, wxSOLID);
 
+
   m_colorPens = m_vt_colorPens;
 
   m_width = width;
@@ -436,8 +438,10 @@ wxTerm::wxTerm(wxWindow* parent, wxWindowID id,
   //ResizeTerminal(width, height);
 
 
-  //SetVirtualSize(m_charWidth * 80, m_charHeight * 100);
-  //SetScrollRate(m_charWidth, m_charHeight);
+  // 10pt Courier New is 8 pixels wide and 16 pixels high... set up
+  // a default client size to match
+  SetVirtualSize(m_width * 8, m_height * 16);
+  SetScrollRate(m_charWidth, m_charHeight);
 
   m_init = 0;
 
@@ -447,9 +451,6 @@ wxTerm::wxTerm(wxWindow* parent, wxWindowID id,
 
   SetFont(monospacedFont);
 
-  // 10pt Courier New is 8 pixels wide and 16 pixels high... set up
-  // a default client size to match
-  SetClientSize(m_charsInLine * 8, m_linesDisplayed * 16);
   UpdateSize();
 }
 
@@ -919,8 +920,10 @@ wxTerm::OnPaint(wxPaintEvent& WXUNUSED(event))
 {
   wxPaintDC
     dc(this);
+  DoPrepareDC(dc);
 
   m_curDC = &dc;
+
   ExposeArea(0, 0, m_width, m_height);
   m_curDC = 0;
 }
@@ -1020,6 +1023,7 @@ wxTerm::ClearSelection()
   if(!m_curDC)
   {
     dc = new wxClientDC(this);
+    DoPrepareDC(*dc);
     m_curDC = dc;
   }
 
@@ -1059,6 +1063,7 @@ wxTerm::MarkSelection()
   if(!m_curDC)
   {
     dc = new wxClientDC(this);
+    DoPrepareDC(*dc);
     m_curDC = dc;
   }
 
@@ -1437,6 +1442,7 @@ wxTerm::OnTimer(wxTimerEvent& WXUNUSED(event))
   if(!m_curDC)
   {
     dc = new wxClientDC(this);
+    DoPrepareDC(*dc);
     m_curDC = dc;
   }
 
@@ -1485,8 +1491,10 @@ wxTerm::MoveChars(int sx, int sy, int dx, int dy, int w, int h)
   w = w * m_charWidth;
   h = h * m_charHeight;
 
-  m_memDC.Blit(0, 0, w, h, m_curDC, sx, sy);
-  m_curDC->Blit(dx, dy, w, h, &m_memDC, 0, 0);
+  if (m_curDC) {
+    m_memDC.Blit(0, 0, w, h, m_curDC, sx, sy);
+    m_curDC->Blit(dx, dy, w, h, &m_memDC, 0, 0);
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1515,20 +1523,21 @@ wxTerm::ClearChars(int bg_color, int x, int y, int w, int h)
   w = w * m_charWidth;
   h = h * m_charHeight;
 
-  bool deleteDC = false;
+  wxClientDC* dc = 0;
   if(!m_curDC)
   {
-	  m_curDC = new wxClientDC(this);
-	  deleteDC = true;
+    dc = new wxClientDC(this);
+    DoPrepareDC(*dc);
+    m_curDC = dc;
   }
   m_curDC->SetPen(m_colorPens[bg_color]);
   m_curDC->SetBrush(wxBrush(m_colors[bg_color], wxSOLID));
   m_curDC->DrawRectangle(x, y, w /* + 1*/, h /*+ 1*/);
 
-  if(deleteDC)
+  if(dc)
   {
-	  delete m_curDC;
-	  m_curDC = 0;
+    delete dc;
+    m_curDC = 0;
   }
 }
 
@@ -1593,16 +1602,18 @@ void wxTerm::UpdateSize()
 	m_inUpdateSize = true;
 	int charWidth, charHeight;
 
-	wxClientDC* dc = new wxClientDC(this);
-
+	wxClientDC* dc = 0;
 	if(!m_curDC)
 	{
+		dc = new wxClientDC(this);
+		DoPrepareDC(*dc);
+
 		m_curDC = dc;
 	}
 
 	dc->SetFont(m_normalFont);
 	dc->GetTextExtent("M", &charWidth, &charHeight);
-	wxSize currentClientSize = GetClientSize();
+	wxSize currentClientSize = GetVirtualSize();
 	int numCharsInLine = currentClientSize.GetX() / charWidth;
 	int numLinesShown = currentClientSize.GetY() / charHeight;
 
@@ -1658,6 +1669,10 @@ wxTerm::ResizeTerminal(int width, int height)
     w,
     h;
 
+  // code makes assumptions about max line width and max line count^M
+  int set_width = std::min(MAXWIDTH, width);
+  int set_height = std::min(MAXHEIGHT, height);
+
   ClearSelection();
 
   /*
@@ -1671,8 +1686,8 @@ wxTerm::ResizeTerminal(int width, int height)
   else
     dc.SetFont(m_boldFont);
   dc.GetTextExtent("M", &m_charWidth, &m_charHeight);
-  w = width * m_charWidth;
-  h = height * m_charHeight;
+  w = set_width * m_charWidth;
+  h = set_height * m_charHeight;
 
   /*
   **  Create our bitmap for copying
@@ -1689,17 +1704,17 @@ wxTerm::ResizeTerminal(int width, int height)
   **  Set window size
   */
 #if defined(__WXGTK__) || defined(__WXMOTIF__)
-  SetSize(w, h + 4);
+  SetVirtualSize(w, h + 4);
 #else
-  SetSize(w, h);
+  SetVirtualSize(w, h);
 #endif
 
   /*
   **  Set terminal size
   */
-  GTerm::ResizeTerminal(width, height);
-  m_width = width;
-  m_height = height;
+  GTerm::ResizeTerminal(set_width, set_height);
+  m_width = set_width;
+  m_height = set_height;
 
   /*
   **  Send event
@@ -1748,11 +1763,15 @@ wxTerm::ProcessInput(int len, unsigned char *data)
 {
   wxClientDC
     dc(this);
+  DoPrepareDC(dc);
+  m_curDC = &dc;
 
   ClearSelection();
-  m_curDC = &dc;
+  
   GTerm::ProcessInput(len, data);
   m_curDC = 0;
+
+  this->wxWindow::Update();
 }
 
 //////////////////////////////////////////////////////////////////////////////

@@ -25,13 +25,14 @@ License: wxWindows License Version 3.1 (See the file license3.txt)
 #include <wx/gdicmn.h>
 #include <wx/string.h>
 #include <wx/window.h>
+#include <wx/scrolwin.h>
 
 #define wxEVT_COMMAND_TERM_RESIZE        wxEVT_USER_FIRST + 1000
 #define wxEVT_COMMAND_TERM_NEXT          wxEVT_USER_FIRST + 1001
 
 #define EVT_TERM_RESIZE(id, fn) { wxEVT_COMMAND_TERM_RESIZE, id, -1, (wxObjectEventFunction) (wxEventFunction) (wxCommandEventFunction) &fn, (wxObject *)NULL },
 
-class wxTerm : public wxWindow, public GTerm
+class wxTerm : public wxScrolled<wxWindow>, public GTerm
 {
   int
     m_charWidth,
