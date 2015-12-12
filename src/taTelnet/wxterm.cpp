@@ -441,17 +441,18 @@ wxTerm::wxTerm(wxWindow* parent, wxWindowID id,
   // 10pt Courier New is 8 pixels wide and 16 pixels high... set up
   // a default client size to match
   SetVirtualSize(m_width * 8, m_height * 16);
-  SetScrollRate(m_charWidth, m_charHeight);
 
   m_init = 0;
 
   SetCursor(wxCursor(wxCURSOR_IBEAM));
 
   wxFont monospacedFont(10, wxMODERN, wxNORMAL, wxNORMAL, false, "Courier New");
-
+  
   SetFont(monospacedFont);
 
   UpdateSize();
+
+  SetScrollRate(m_charWidth, m_charHeight);
 }
 
 wxTerm::~wxTerm()
@@ -944,8 +945,12 @@ wxTerm::OnLeftDown(wxMouseEvent& event)
 	SetFocus();
 
   ClearSelection();
-  m_selx1 = m_selx2 = event.GetX() / m_charWidth;
-  m_sely1 = m_sely2 = event.GetY() / m_charHeight;
+  int x = 0, y = 0;
+  this->CalcUnscrolledPosition(event.GetX(), event.GetY(), &x, &y);
+  m_selx1 = m_selx2 = x / m_charWidth;
+  m_sely1 = m_sely2 = y / m_charHeight;
+  printf("mouse down at (%d, %d) charWidth=%d charHeight=%d, posx=%d posy=%d \n", 
+    m_selx1, m_sely1, m_charWidth, m_charHeight, x, y);
   m_selecting = TRUE;
   CaptureMouse();
 
@@ -989,10 +994,12 @@ wxTerm::OnMouseMove(wxMouseEvent& event)
 
   if(m_selecting)
   {
-    m_selx2 = event.GetX() / m_charWidth;
+    int x = 0, y = 0;
+    this->CalcUnscrolledPosition(event.GetX(), event.GetY(), &x, &y);
+    m_selx2 = x / m_charWidth;
     if(m_selx2 >= Width())
       m_selx2 = Width() - 1;
-    m_sely2 = event.GetY() / m_charHeight;
+    m_sely2 = y / m_charHeight;
     if(m_sely2 >= Height())
       m_sely2 = Height() - 1;
 
@@ -1033,7 +1040,7 @@ wxTerm::ClearSelection()
 
   if(dc)
   {
-	  this->wxWindow::Update();
+	  this->GTerm::Update();
 
     m_curDC = 0;
     delete dc;
@@ -1105,7 +1112,7 @@ wxTerm::MarkSelection()
       Select(x, m_sely2, 1);
   }
 
-  this->wxWindow::Update();
+  this->GTerm::Update();
 
   if(dc)
   {
@@ -1231,7 +1238,6 @@ wxTerm::DrawText(int fg_color, int bg_color, int flags,
 
   if(flags & BOLD && m_boldStyle == COLOR)
     fg_color = (fg_color % 8) + 8;
-
   if(flags & SELECTED)
   {
     fg_color = 0;
@@ -1284,16 +1290,17 @@ wxTerm::DrawText(int fg_color, int bg_color, int flags,
     }
   }
 
-  x = x * m_charWidth;
-  y = y * m_charHeight;
+  int xpix = x * m_charWidth;
+  int ypix = y * m_charHeight;
+  
   m_curDC->SetBackgroundMode(wxSOLID);
   m_curDC->SetTextBackground(m_colors[bg_color]);
   m_curDC->SetTextForeground(m_colors[fg_color]);
-  m_curDC->DrawText(str, x, y);
+  m_curDC->DrawText(str, xpix, ypix);
   if(flags & BOLD && m_boldStyle == OVERSTRIKE)
   {
     m_curDC->SetBackgroundMode(wxTRANSPARENT);
-    m_curDC->DrawText(str, x + 1, y);
+    m_curDC->DrawText(str, xpix + 1, ypix);
   }
 }
 
@@ -1518,10 +1525,10 @@ wxTerm::ClearChars(int bg_color, int x, int y, int w, int h)
   if(!m_marking)
     ClearSelection();
 
-  x = x * m_charWidth;
-  y = y * m_charHeight;
-  w = w * m_charWidth;
-  h = h * m_charHeight;
+  int xpix = x * m_charWidth;
+  int ypix = y * m_charHeight;
+  int wpix = w * m_charWidth;
+  int hpix = h * m_charHeight;
 
   wxClientDC* dc = 0;
   if(!m_curDC)
@@ -1532,7 +1539,7 @@ wxTerm::ClearChars(int bg_color, int x, int y, int w, int h)
   }
   m_curDC->SetPen(m_colorPens[bg_color]);
   m_curDC->SetBrush(wxBrush(m_colors[bg_color], wxSOLID));
-  m_curDC->DrawRectangle(x, y, w /* + 1*/, h /*+ 1*/);
+  m_curDC->DrawRectangle(xpix, ypix, wpix /* + 1*/, hpix /*+ 1*/);
 
   if(dc)
   {
@@ -1688,6 +1695,9 @@ wxTerm::ResizeTerminal(int width, int height)
   dc.GetTextExtent("M", &m_charWidth, &m_charHeight);
   w = set_width * m_charWidth;
   h = set_height * m_charHeight;
+
+  printf("resizeTerminal charWidth=%d charHeight=%d \n", m_charWidth, m_charHeight);
+  
 
   /*
   **  Create our bitmap for copying
