@@ -23,9 +23,11 @@ License: wxWindows License Version 3.1 (See the file license3.txt)
 #include <wx/event.h>
 #include <wx/bitmap.h>
 #include <wx/brush.h>
+#include <wx/clipbrd.h>
 #include <wx/cursor.h>
 #include <wx/dcclient.h>
 #include <wx/log.h>
+#include <wx/menu.h>
 #include <wx/pen.h>
 #include <wx/settings.h>
 #include <wx/utils.h>
@@ -40,6 +42,7 @@ License: wxWindows License Version 3.1 (See the file license3.txt)
 
 #define CURSOR_BLINK_DEFAULT_TIMEOUT	300
 #define CURSOR_BLINK_MAX_TIMEOUT	2000
+#define ID_MENU_COPY 1000
 
 /*
 **  Keycode translation tables
@@ -368,6 +371,8 @@ BEGIN_EVENT_TABLE(wxTerm, wxWindow)
   EVT_SIZE						(wxTerm::OnSize)
   EVT_SET_FOCUS					(wxTerm::OnGainFocus)
   EVT_KILL_FOCUS				(wxTerm::OnLoseFocus)
+  EVT_RIGHT_DOWN        (wxTerm::OnRightDown)
+  EVT_MENU              (ID_MENU_COPY, wxTerm::OnMenuCopy)
 END_EVENT_TABLE()
 
 wxTerm::wxTerm(wxWindow* parent, wxWindowID id,
@@ -949,8 +954,6 @@ wxTerm::OnLeftDown(wxMouseEvent& event)
   this->CalcUnscrolledPosition(event.GetX(), event.GetY(), &x, &y);
   m_selx1 = m_selx2 = x / m_charWidth;
   m_sely1 = m_sely2 = y / m_charHeight;
-  printf("mouse down at (%d, %d) charWidth=%d charHeight=%d, posx=%d posy=%d \n", 
-    m_selx1, m_sely1, m_charWidth, m_charHeight, x, y);
   m_selecting = TRUE;
   CaptureMouse();
 
@@ -976,6 +979,49 @@ wxTerm::OnLeftUp(wxMouseEvent& event)
 	ReleaseMouse();
   }
 
+}
+
+void
+wxTerm::OnRightDown(wxMouseEvent& event)
+{
+  wxMenu menu;
+  menu.Append(ID_MENU_COPY, _("Copy"));
+
+  PopupMenu(&menu, event.GetX(), event.GetY());
+}
+
+void
+wxTerm::OnMenuCopy(wxCommandEvent& event)
+{
+  wxString selectedText;
+  bool lineCopy = false;
+
+  // get the selected text from the terminal^M
+  for (int y = 0; y < m_height; y++) {
+    if (lineCopy) {
+      selectedText += "\n";
+    }
+    lineCopy = false;
+    wxString line;
+    for (int x = 0; x < m_width; x++) {
+      if (IsSelected(x, y)) {
+        char c = GetChar(x, y);
+        line << c;
+        lineCopy = true;
+      }
+    }
+    if (!line.empty()) {
+      line.Trim();
+      selectedText += line;
+    }
+  }
+
+  if (!selectedText.empty()) {
+    if (wxTheClipboard->Open()) {
+      wxTheClipboard->SetData(new wxTextDataObject(selectedText));
+      wxTheClipboard->Close();
+    }
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1676,7 +1722,7 @@ wxTerm::ResizeTerminal(int width, int height)
     w,
     h;
 
-  // code makes assumptions about max line width and max line count^M
+  // code makes assumptions about max line width and max line count
   int set_width = std::min(MAXWIDTH, width);
   int set_height = std::min(MAXHEIGHT, height);
 

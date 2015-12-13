@@ -192,12 +192,15 @@ private:
   void OnPaint(wxPaintEvent& event);
   void OnLeftDown(wxMouseEvent& event);
   void OnLeftUp(wxMouseEvent& event);
+  void OnRightDown(wxMouseEvent& event);
   void OnMouseMove(wxMouseEvent& event);
   void OnTimer(wxTimerEvent& event);
   void OnSize(wxSizeEvent &event);
 
   void OnGainFocus(wxFocusEvent &event);
   void OnLoseFocus(wxFocusEvent &event);
+
+  void OnMenuCopy(wxCommandEvent& event);
 
   //private wxScrollBar* m_scrollbar;
 
