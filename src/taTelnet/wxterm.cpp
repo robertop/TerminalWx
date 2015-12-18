@@ -957,6 +957,7 @@ wxTerm::OnLeftDown(wxMouseEvent& event)
   m_selecting = TRUE;
   CaptureMouse();
 
+  event.Skip();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1050,6 +1051,10 @@ wxTerm::OnMouseMove(wxMouseEvent& event)
       m_sely2 = Height() - 1;
 
     MarkSelection();
+  }
+  else
+  {
+    event.Skip();
   }
 }
 
@@ -1742,9 +1747,6 @@ wxTerm::ResizeTerminal(int width, int height)
   w = set_width * m_charWidth;
   h = set_height * m_charHeight;
 
-  printf("resizeTerminal charWidth=%d charHeight=%d \n", m_charWidth, m_charHeight);
-  
-
   /*
   **  Create our bitmap for copying
   */
@@ -1997,4 +1999,15 @@ void wxTerm::OnSize(wxSizeEvent &event)
 void wxTerm::UpdateRemoteSize(int width, int height)
 {
 
+}
+
+bool wxTerm::CharPositionFromPoint(int x, int y, int& column, int& lineNumber)
+{
+  int unscrolledX, unscrolledY;
+  this->CalcUnscrolledPosition(x, y, &unscrolledX, &unscrolledY);
+  column = unscrolledX / m_charWidth;
+  lineNumber =  unscrolledY / m_charHeight;
+  
+  return lineNumber >= 0 && lineNumber < Height()
+    && column >= 0 && column < Width();
 }

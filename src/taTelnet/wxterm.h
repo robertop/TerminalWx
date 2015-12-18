@@ -180,6 +180,7 @@ public:
   virtual void UpdateRemoteSize(int width, int height);
   int GetTermWidth(){return m_charsInLine;}
   int GetTermHeight(){return m_linesDisplayed;}
+  bool CharPositionFromPoint(int x, int y, int& column, int& lineNumber);
 
 private:
   int MapKeyCode(int keyCode);

@@ -350,6 +350,7 @@ public:
         virtual int IsSelected(int x, int y);
         virtual void Select(int x, int y, int select);
         virtual unsigned char GetChar(int x, int y);
+        virtual int IsUnderlined(int x, int y);
 };
 
 #endif

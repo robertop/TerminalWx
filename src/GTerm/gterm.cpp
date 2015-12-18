@@ -134,6 +134,14 @@ GTerm::IsSelected(int x, int y)
   return 0;
 }
 
+int
+GTerm::IsUnderlined(int x, int y)
+{
+  if(color && x >= 0 && x < Width() && y >= 0 && y < Height())
+    return color[(linenumbers[y] * MAXWIDTH) + x] & UNDERLINE;
+  return 0;
+}
+
 void
 GTerm::Select(int x, int y, int select)
 {
