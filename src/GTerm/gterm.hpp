@@ -351,6 +351,8 @@ public:
         virtual void Select(int x, int y, int select);
         virtual unsigned char GetChar(int x, int y);
         virtual int IsUnderlined(int x, int y);
+        int GetCursorX();
+        int GetCursorY();
 };
 
 #endif

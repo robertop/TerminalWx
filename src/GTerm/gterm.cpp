@@ -165,5 +165,14 @@ GTerm::GetChar(int x, int y)
   return 0;
 }
 
+int
+GTerm::GetCursorX()
+{
+    return cursor_x;
+}
 
+int GTerm::GetCursorY()
+{
+    return cursor_y;
+}
 
