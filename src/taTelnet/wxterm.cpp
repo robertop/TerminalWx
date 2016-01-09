@@ -43,6 +43,7 @@ License: wxWindows License Version 3.1 (See the file license3.txt)
 #define CURSOR_BLINK_DEFAULT_TIMEOUT	300
 #define CURSOR_BLINK_MAX_TIMEOUT	2000
 #define ID_MENU_COPY 1000
+#define ID_MENU_PASTE 1001
 
 /*
 **  Keycode translation tables
@@ -373,6 +374,7 @@ BEGIN_EVENT_TABLE(wxTerm, wxWindow)
   EVT_KILL_FOCUS				(wxTerm::OnLoseFocus)
   EVT_RIGHT_DOWN        (wxTerm::OnRightDown)
   EVT_MENU              (ID_MENU_COPY, wxTerm::OnMenuCopy)
+  EVT_MENU              (ID_MENU_PASTE, wxTerm::OnMenuPaste)
 END_EVENT_TABLE()
 
 wxTerm::wxTerm(wxWindow* parent, wxWindowID id,
@@ -987,6 +989,7 @@ wxTerm::OnRightDown(wxMouseEvent& event)
 {
   wxMenu menu;
   menu.Append(ID_MENU_COPY, _("Copy"));
+  menu.Append(ID_MENU_PASTE, ("Paste"));
 
   PopupMenu(&menu, event.GetX(), event.GetY());
 }
@@ -1022,6 +1025,27 @@ wxTerm::OnMenuCopy(wxCommandEvent& event)
       wxTheClipboard->SetData(new wxTextDataObject(selectedText));
       wxTheClipboard->Close();
     }
+  }
+}
+
+void
+wxTerm::OnMenuPaste(wxCommandEvent& event)
+{
+  wxString text;
+  if (wxTheClipboard->Open())
+  {
+    if (wxTheClipboard->IsSupported(wxDF_TEXT))
+    {
+      wxTextDataObject data;
+      wxTheClipboard->GetData(data);
+      text = data.GetText();
+    }
+    wxTheClipboard->Close();
+  }
+
+  if (!text.empty()) {
+    SetFocus();
+    ProcessInput(text.length(), (unsigned char*)const_cast<char*>((const char*)text.mb_str()));
   }
 }
 

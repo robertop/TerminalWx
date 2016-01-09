@@ -204,6 +204,7 @@ private:
   void OnLoseFocus(wxFocusEvent &event);
 
   void OnMenuCopy(wxCommandEvent& event);
+  void OnMenuPaste(wxCommandEvent& event);
 
   //private wxScrollBar* m_scrollbar;
 
