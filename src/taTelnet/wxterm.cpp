@@ -1597,9 +1597,6 @@ wxTerm::MoveChars(int sx, int sy, int dx, int dy, int w, int h)
 void
 wxTerm::ClearChars(int bg_color, int x, int y, int w, int h)
 {
-  if(!m_marking)
-    ClearSelection();
-
   int xpix = x * m_charWidth;
   int ypix = y * m_charHeight;
   int wpix = w * m_charWidth;
