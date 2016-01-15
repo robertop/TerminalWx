@@ -381,7 +381,7 @@ wxTerm::wxTerm(wxWindow* parent, wxWindowID id,
                const wxPoint& pos,
                int width, int height,
                const wxString& name) :
-  wxScrolled<wxWindow>(parent, id, pos, wxSize(-1, -1), 0, name),
+  wxScrolled<wxWindow>(parent, id, pos, wxSize(-1, -1), wxWANTS_CHARS, name),
   GTerm(width, height)
 {
   int
