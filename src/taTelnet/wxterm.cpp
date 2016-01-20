@@ -882,6 +882,7 @@ wxTerm::OnChar(wxKeyEvent& event)
       ProcessOutput(len, buf);
       if((GetMode() & LOCALECHO) && !(GetMode() & PC))
         ProcessInput(len, buf);
+      event.Skip();
     }
     else
       event.Skip();
