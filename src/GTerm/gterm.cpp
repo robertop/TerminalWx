@@ -119,7 +119,7 @@ void
 GTerm::SetMachineName(char *machinename)
 {
   if(pc_machinename)
-    delete pc_machinename;
+    delete[] pc_machinename;
 
   pc_machinename = new char[strlen(machinename) + 1];
   strcpy(pc_machinename, machinename);
