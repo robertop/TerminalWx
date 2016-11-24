@@ -12,7 +12,7 @@ LD = g++
 WINDRES = windres
 
 INC = 
-CFLAGS = `wx-config --cflags` -Wall
+CFLAGS = `wx-config --cflags` -Wall -Wno-unknown-pragmas -Wno-unused-variable
 RESINC = 
 LIBDIR = 
 LIB = 
