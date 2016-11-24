@@ -329,7 +329,7 @@ public:
 
 	// optional child-supplied functions
 	virtual void MoveChars(int sx, int sy, int dx, int dy, int w, int h) { }
-	virtual void ClearChars(int bg_color, int x, int y, int w, int h) { }
+	virtual void ClearChars(int clear_bg_color, int x, int y, int w, int h) { }
    virtual void SendBack(int len, char *data) { }
 	virtual void SendBack(char *data) { SendBack(strlen(data), data); }
 	virtual void ModeChange(int state) { }

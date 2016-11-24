@@ -164,7 +164,7 @@ public:
                           int x, int y, unsigned char c);
 
   virtual void MoveChars(int sx, int sy, int dx, int dy, int w, int h);
-  virtual void ClearChars(int bg_color, int x, int y, int w, int h);
+  virtual void ClearChars(int clear_bg_color, int x, int y, int w, int h);
 //  virtual void SendBack(int len, char *data);
   virtual void ModeChange(int state);
   virtual void Bell();

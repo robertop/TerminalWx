@@ -1585,18 +1585,18 @@ wxTerm::MoveChars(int sx, int sy, int dx, int dy, int w, int h)
 ///  Clears a section of characters from the screen.  This virtual function
 ///  is called from GTerm::update_changes.
 ///
-///  @param  bg_color int  The background color to replace the characters with
-///  @param  x        int  The starting x position, in characters
-///  @param  y        int  The starting y position, in characters
-///  @param  w        int  The width of the area to be cleared, in characters
-///  @param  h        int  The height of the area to be cleared, in characters
+///  @param  clear_bg_color int  The background color to replace the characters with
+///  @param  x              int  The starting x position, in characters
+///  @param  y              int  The starting y position, in characters
+///  @param  w              int  The width of the area to be cleared, in characters
+///  @param  h              int  The height of the area to be cleared, in characters
 ///
 ///  @return void
 ///
 ///  @author Derry Bryson @date 04-22-2004
 //////////////////////////////////////////////////////////////////////////////
 void
-wxTerm::ClearChars(int bg_color, int x, int y, int w, int h)
+wxTerm::ClearChars(int clear_bg_color, int x, int y, int w, int h)
 {
   int xpix = x * m_charWidth;
   int ypix = y * m_charHeight;
@@ -1610,8 +1610,8 @@ wxTerm::ClearChars(int bg_color, int x, int y, int w, int h)
     DoPrepareDC(*dc);
     m_curDC = dc;
   }
-  m_curDC->SetPen(m_colorPens[bg_color]);
-  m_curDC->SetBrush(wxBrush(m_colors[bg_color], wxSOLID));
+  m_curDC->SetPen(m_colorPens[clear_bg_color]);
+  m_curDC->SetBrush(wxBrush(m_colors[clear_bg_color], wxSOLID));
   m_curDC->DrawRectangle(xpix, ypix, wpix /* + 1*/, hpix /*+ 1*/);
 
   if(dc)
